@@ -22,7 +22,7 @@ class Post {
             val title = json.get("title") as String
             val body = json.get("body") as String
 
-            return Post(userId = userId, id = id, title = title, body = body)
+            return Post(userId = userId, id = id, title = title.capitalize(), body = body.capitalize())
         }
     }
 

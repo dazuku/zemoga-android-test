@@ -17,6 +17,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import com.android.volley.Response
+import com.zemoga.danieldaza.zemogatest.MainView.Models.Post
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Posts
 import com.zemoga.danieldaza.zemogatest.MainView.Utils.ServerComunicator
 import com.zemoga.danieldaza.zemogatest.MainView.ViewModels.PostsViewModel
@@ -24,8 +25,7 @@ import com.zemoga.danieldaza.zemogatest.MainView.ViewModels.PostsViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_main.view.*
 
-class MainActivity : AppCompatActivity() {
-
+class MainActivity : AppCompatActivity(), PostFragment.OnListFragmentInteractionListener {
     /**
      * The [android.support.v4.view.PagerAdapter] that will provide
      * fragments for each of the sections. We use a
@@ -36,10 +36,15 @@ class MainActivity : AppCompatActivity() {
      */
     private var mSectionsPagerAdapter: SectionsPagerAdapter? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    companion object {
+        val FAVORITE_TAB = "FAVORITE_TAB"
+        val ALL_TAB = "ALL_TAB"
+    }
 
+    private var favoritesItems: Posts? = null
+    private var allItems: Posts? = null
+
+    fun setAdapter() {
         setSupportActionBar(toolbar)
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -55,6 +60,11 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
         var postsViewModel = ViewModelProviders.of(this).get(PostsViewModel::class.java)
         var serverComunicator = ServerComunicator.getInstance(this.applicationContext)
@@ -64,14 +74,33 @@ class MainActivity : AppCompatActivity() {
                     Response.Listener { response ->
                         Log.i("Server Comunicator", response.toString())
                         postsViewModel.setPosts(Posts.fromJsonArray(response))
+                        favoritesItems = postsViewModel.getPosts()
+                        allItems = postsViewModel.getPosts()
+                        setAdapter()
                     },
                     Response.ErrorListener { error ->
                         Log.e("Server Comunicator", error.toString())
                     })
+        } else {
+            favoritesItems = postsViewModel.getPosts()
+            allItems = postsViewModel.getPosts()
+            setAdapter()
         }
 
     }
 
+    override fun onListFragmentInteraction(item: Post?) {
+        Log.i("Holi", item.toString())
+    }
+
+    fun getFragmentData(type: String) : Posts? {
+        if (type === MainActivity.FAVORITE_TAB) {
+            return favoritesItems
+        } else if (type === MainActivity.ALL_TAB) {
+            return allItems
+        }
+        return null
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -100,47 +129,17 @@ class MainActivity : AppCompatActivity() {
     inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
 
         override fun getItem(position: Int): Fragment {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1)
+            val fragment = PostFragment()
+            val args = Bundle()
+
+            args.putString("type", if (position == 0) MainActivity.ALL_TAB else MainActivity.FAVORITE_TAB)
+            fragment.arguments = args
+
+            return fragment
         }
 
         override fun getCount(): Int {
-            // Show 3 total pages.
             return 2
-        }
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    class PlaceholderFragment : Fragment() {
-
-        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                                  savedInstanceState: Bundle?): View? {
-            val rootView = inflater.inflate(R.layout.fragment_main, container, false)
-            rootView.section_label.text = getString(R.string.section_format, arguments?.getInt(ARG_SECTION_NUMBER))
-            return rootView
-        }
-
-        companion object {
-            /**
-             * The fragment argument representing the section number for this
-             * fragment.
-             */
-            private val ARG_SECTION_NUMBER = "section_number"
-
-            /**
-             * Returns a new instance of this fragment for the given section
-             * number.
-             */
-            fun newInstance(sectionNumber: Int): PlaceholderFragment {
-                val fragment = PlaceholderFragment()
-                val args = Bundle()
-                args.putInt(ARG_SECTION_NUMBER, sectionNumber)
-                fragment.arguments = args
-                return fragment
-            }
         }
     }
 }
