@@ -1,5 +1,6 @@
 package com.zemoga.danieldaza.zemogatest.MainView
 
+import android.arch.lifecycle.ViewModelProviders
 import android.support.design.widget.TabLayout
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -9,11 +10,16 @@ import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.ViewPager
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import com.android.volley.Response
+import com.zemoga.danieldaza.zemogatest.MainView.Models.Posts
+import com.zemoga.danieldaza.zemogatest.MainView.Utils.ServerComunicator
+import com.zemoga.danieldaza.zemogatest.MainView.ViewModels.PostsViewModel
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_main.view.*
@@ -48,6 +54,20 @@ class MainActivity : AppCompatActivity() {
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
+        }
+
+        var postsViewModel = ViewModelProviders.of(this).get(PostsViewModel::class.java)
+        var serverComunicator = ServerComunicator.getInstance(this.applicationContext)
+
+        if (postsViewModel.getPosts() == null) {
+            serverComunicator.getPosts(
+                    Response.Listener { response ->
+                        Log.i("Server Comunicator", response.toString())
+                        postsViewModel.setPosts(Posts.fromJsonArray(response))
+                    },
+                    Response.ErrorListener { error ->
+                        Log.e("Server Comunicator", error.toString())
+                    })
         }
 
     }
@@ -87,7 +107,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun getCount(): Int {
             // Show 3 total pages.
-            return 3
+            return 2
         }
     }
 
