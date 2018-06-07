@@ -10,13 +10,13 @@ import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
 
-class ServerComunicator constructor(context : Context) {
+class ServerCommunicator constructor(context : Context) {
     companion object {
         @Volatile
-        private var INSTANCE : ServerComunicator ?= null
+        private var INSTANCE : ServerCommunicator ?= null
         fun getInstance(context : Context) =
                 INSTANCE ?: synchronized(this) {
-                    INSTANCE ?: ServerComunicator(context)
+                    INSTANCE ?: ServerCommunicator(context)
                 }
     }
 

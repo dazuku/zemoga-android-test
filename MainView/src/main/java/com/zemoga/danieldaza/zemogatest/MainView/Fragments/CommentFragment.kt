@@ -1,16 +1,17 @@
-package com.zemoga.danieldaza.zemogatest.MainView
+package com.zemoga.danieldaza.zemogatest.MainView.Fragments
 
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.zemoga.danieldaza.zemogatest.MainView.Adapters.MyCommentRecyclerViewAdapter
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Comment
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Comments
+import com.zemoga.danieldaza.zemogatest.MainView.R
 
 /**
  * A fragment representing a list of Items.
@@ -26,7 +27,7 @@ class CommentFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            comments = it.getSerializable(CommentFragment.ARG_COMMENTS) as Comments
+            comments = it.getSerializable(ARG_COMMENTS) as Comments
         }
     }
 
@@ -56,13 +57,6 @@ class CommentFragment : Fragment() {
     override fun onDetach() {
         super.onDetach()
         listener = null
-    }
-
-    fun updateComments(comments: Comments) {
-        val view = this.view as RecyclerView
-        val adapter = view.adapter as MyCommentRecyclerViewAdapter
-
-        adapter.updateComments(comments)
     }
 
     /**

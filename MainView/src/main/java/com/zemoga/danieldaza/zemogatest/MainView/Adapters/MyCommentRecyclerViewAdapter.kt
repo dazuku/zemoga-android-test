@@ -1,4 +1,4 @@
-package com.zemoga.danieldaza.zemogatest.MainView
+package com.zemoga.danieldaza.zemogatest.MainView.Adapters
 
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -7,9 +7,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 
 
-import com.zemoga.danieldaza.zemogatest.MainView.CommentFragment.OnListFragmentInteractionListener
+import com.zemoga.danieldaza.zemogatest.MainView.Fragments.CommentFragment.OnListFragmentInteractionListener
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Comment
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Comments
+import com.zemoga.danieldaza.zemogatest.MainView.R
 
 import kotlinx.android.synthetic.main.fragment_comment.view.*
 

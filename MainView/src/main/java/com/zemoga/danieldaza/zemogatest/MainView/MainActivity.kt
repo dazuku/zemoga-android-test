@@ -4,29 +4,26 @@ import android.app.Activity
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.support.design.widget.TabLayout
-import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
-import android.support.v4.view.ViewPager
 import android.os.Bundle
 import android.support.v4.view.PagerAdapter
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import com.android.volley.Response
+import com.zemoga.danieldaza.zemogatest.MainView.Fragments.PostFragment
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Post
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Posts
-import com.zemoga.danieldaza.zemogatest.MainView.Utils.ServerComunicator
+import com.zemoga.danieldaza.zemogatest.MainView.Models.SectionPage
+import com.zemoga.danieldaza.zemogatest.MainView.Utils.ServerCommunicator
 import com.zemoga.danieldaza.zemogatest.MainView.ViewModels.PostsViewModel
 
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_main.view.*
 
 class MainActivity : AppCompatActivity(), PostFragment.OnListFragmentInteractionListener {
     /**
@@ -38,67 +35,59 @@ class MainActivity : AppCompatActivity(), PostFragment.OnListFragmentInteraction
      * [android.support.v4.app.FragmentStatePagerAdapter].
      */
     private var mSectionsPagerAdapter: SectionsPagerAdapter? = null
+    private var sections: HashMap<String, SectionPage> = HashMap()
+    private var postsViewModel: PostsViewModel? = null
+    private var serverCommunicator: ServerCommunicator? = null
 
-    companion object {
-        val FAVORITE_TAB = "FAVORITE_TAB"
-        val ALL_TAB = "ALL_TAB"
+    private val keys = ArrayList<String>()
+
+
+    init {
+        keys.add(ALL_TAB)
+        keys.add(FAVORITE_TAB)
     }
 
-    private var favoritesItems: Posts? = null
-    private var allItems: Posts? = null
-
-    fun setAdapter() {
-        setSupportActionBar(toolbar)
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
-
-        // Set up the ViewPager with the sections adapter.
-        container.adapter = mSectionsPagerAdapter
-
-        container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
-        tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
-
-        removeAll.setOnClickListener { view ->
-            mSectionsPagerAdapter!!.fragments[0].removeAll()
-            setFavoriteItems()
-            mSectionsPagerAdapter?.notifyDataSetChanged()
-        }
+    companion object {
+        const val FAVORITE_TAB = "FAVORITE_TAB"
+        const val ALL_TAB = "ALL_TAB"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val postsViewModel = ViewModelProviders.of(this).get(PostsViewModel::class.java)
+        postsViewModel = ViewModelProviders.of(this).get(PostsViewModel::class.java)
+        serverCommunicator = ServerCommunicator.getInstance(applicationContext)
 
-        if (postsViewModel.getPosts() == null) {
-            val serverComunicator = ServerComunicator.getInstance(this.applicationContext)
+        if (postsViewModel?.getPosts() == null) {
 
-            serverComunicator.getPosts(
+            serverCommunicator?.getPosts(
                     Response.Listener { response ->
-                        Log.i("Server Comunicator", response.toString())
                         val posts = Posts.fromJsonArray(response)
 
                         for (i in 0..19) {
                             posts[i].setUnread()
                         }
 
-                        postsViewModel.setPosts(posts)
-                        favoritesItems = Posts()
-                        allItems = postsViewModel.getPosts()
+                        postsViewModel?.setPosts(posts)
                         progressBarPosts.visibility = View.GONE
+
+                        setSections()
                         setAdapter()
                     },
                     Response.ErrorListener { error ->
-                        Log.e("Server Comunicator", error.toString())
+                        Log.e("Server Communicator", error.toString())
                     })
         } else {
-            favoritesItems = Posts()
-            allItems = postsViewModel.getPosts()
+            setSections()
             setAdapter()
         }
 
+        removeAll.setOnClickListener { view ->
+            mSectionsPagerAdapter!!.sections[ALL_TAB]?.instance?.removeAll()
+            setFavoriteItems()
+            mSectionsPagerAdapter?.notifyDataSetChanged()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -107,24 +96,14 @@ class MainActivity : AppCompatActivity(), PostFragment.OnListFragmentInteraction
         if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
             val postId = data?.getIntExtra(PostDetailActivity.POST_ID, 0)
             val favoriteValue = data?.getBooleanExtra(PostDetailActivity.IS_FAVORITE, false)
+            val post = sections[ALL_TAB]?.posts?.find { post -> post.id == postId }
 
-            val post = allItems?.find { post -> post.id == postId }
+            post?.setRead()
             post?.setFavorite(favoriteValue as Boolean)
-
             setFavoriteItems()
 
             mSectionsPagerAdapter?.notifyDataSetChanged()
         }
-    }
-
-    fun setFavoriteItems() {
-        val favorites = Posts()
-
-        for (post in allItems!!) {
-            if (post.isFavorite()) favorites.add(post)
-        }
-
-        this.favoritesItems = favorites
     }
 
     override fun onListFragmentInteraction(item: Post?): Boolean {
@@ -136,32 +115,21 @@ class MainActivity : AppCompatActivity(), PostFragment.OnListFragmentInteraction
         }
 
         startActivityForResult(intent, 1)
-        item?.setRead()
 
-        return true
+        return false
     }
 
     override fun onRemoveItemFromListListener(position: Int, type: String) {
         if (type == FAVORITE_TAB) {
-            val postToDelete = favoritesItems!![position]
-            val index = allItems?.indexOf(postToDelete)
+            val postToDelete = sections[FAVORITE_TAB]?.posts!![position]
+            val index = sections[ALL_TAB]?.posts?.indexOf(postToDelete)
 
-            allItems?.removeAt(index as Int)
+            sections[ALL_TAB]?.posts?.removeAt(index as Int)
         } else {
-            this.setFavoriteItems()
+            setFavoriteItems()
         }
 
         mSectionsPagerAdapter?.notifyDataSetChanged()
-    }
-
-
-    fun getFragmentData(type: String) : Posts? {
-        if (type === MainActivity.FAVORITE_TAB) {
-            return favoritesItems
-        } else if (type === MainActivity.ALL_TAB) {
-            return allItems
-        }
-        return null
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -177,28 +145,24 @@ class MainActivity : AppCompatActivity(), PostFragment.OnListFragmentInteraction
         val id = item.itemId
 
         if (id == R.id.action_reload) {
-            val postsViewModel = ViewModelProviders.of(this).get(PostsViewModel::class.java)
-            val serverComunicator = ServerComunicator.getInstance(this.applicationContext)
-
             progressBarPosts.visibility = View.VISIBLE
 
-            serverComunicator.getPosts(
+            serverCommunicator?.getPosts(
                     Response.Listener { response ->
-                        Log.i("Server Comunicator", response.toString())
                         val posts = Posts.fromJsonArray(response)
 
                         for (i in 0..19) {
                             posts[i].setUnread()
                         }
 
-                        postsViewModel.setPosts(posts)
-                        favoritesItems = Posts()
-                        allItems = postsViewModel.getPosts()
+                        postsViewModel?.setPosts(posts)
+                        sections[FAVORITE_TAB]?.posts = Posts()
+                        sections[ALL_TAB]?.posts = postsViewModel?.getPosts()
                         mSectionsPagerAdapter?.notifyDataSetChanged()
                         progressBarPosts.visibility = View.GONE
                     },
                     Response.ErrorListener { error ->
-                        Log.e("Server Comunicator", error.toString())
+                        Log.e("Server Communicator", error.toString())
                     })
 
             return true
@@ -207,28 +171,59 @@ class MainActivity : AppCompatActivity(), PostFragment.OnListFragmentInteraction
         return super.onOptionsItemSelected(item)
     }
 
+    private fun setSections() {
+        sections[ALL_TAB] = SectionPage(ALL_TAB, postsViewModel?.getPosts())
+        sections[FAVORITE_TAB] = SectionPage(FAVORITE_TAB, Posts())
+    }
+
+    private fun setAdapter() {
+        setSupportActionBar(toolbar)
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = SectionsPagerAdapter(sections, keys, supportFragmentManager)
+
+        // Set up the ViewPager with the sections adapter.
+        container.adapter = mSectionsPagerAdapter
+
+        container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
+        tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
+    }
+
+    private fun setFavoriteItems() {
+        val favorites = Posts()
+
+        for (post in sections[ALL_TAB]?.posts!!) {
+            if (post.isFavorite()) favorites.add(post)
+        }
+
+        sections[FAVORITE_TAB]?.posts = favorites
+    }
+
+
+    fun getFragmentData(type: String) : Posts? {
+        return sections[type]?.posts
+    }
 
     /**
      * A [FragmentPagerAdapter] that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
-        var fragments: ArrayList<PostFragment> = ArrayList(2)
+    inner class SectionsPagerAdapter(
+            var sections: HashMap<String, SectionPage>,
+            private var keys: ArrayList<String>,
+            fm: FragmentManager): FragmentPagerAdapter(fm) {
 
         override fun getItemPosition(`object`: Any): Int {
             return PagerAdapter.POSITION_NONE
         }
 
         override fun getItem(position: Int): Fragment {
-            val type = if (position == 0) MainActivity.ALL_TAB else MainActivity.FAVORITE_TAB
-
-            fragments.add(position, PostFragment.newInstance(type))
-
-            return fragments[position]
+            val type = keys[position]
+            return sections[type]?.getFragment() as Fragment
         }
 
         override fun getCount(): Int {
-            return 2
+            return keys.size
         }
     }
 }

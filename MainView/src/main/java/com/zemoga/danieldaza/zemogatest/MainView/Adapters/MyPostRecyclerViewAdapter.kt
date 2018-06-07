@@ -1,21 +1,19 @@
-package com.zemoga.danieldaza.zemogatest.MainView
+package com.zemoga.danieldaza.zemogatest.MainView.Adapters
 
-import android.support.constraint.ConstraintLayout
 import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.helper.ItemTouchHelper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.*
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.daimajia.swipe.SwipeLayout
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Post
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Posts
 
 
-import com.zemoga.danieldaza.zemogatest.MainView.PostFragment.OnListFragmentInteractionListener
+import com.zemoga.danieldaza.zemogatest.MainView.Fragments.PostFragment.OnListFragmentInteractionListener
+import com.zemoga.danieldaza.zemogatest.MainView.R
 
 import kotlinx.android.synthetic.main.fragment_post.view.*
 

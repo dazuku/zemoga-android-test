@@ -1,25 +1,20 @@
-package com.zemoga.danieldaza.zemogatest.MainView
+package com.zemoga.danieldaza.zemogatest.MainView.Fragments
 
-import android.annotation.SuppressLint
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
-import android.graphics.Canvas
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
-import android.support.v7.widget.helper.ItemTouchHelper.ACTION_STATE_SWIPE
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.SimpleAdapter
+import com.zemoga.danieldaza.zemogatest.MainView.Adapters.MyPostRecyclerViewAdapter
 import com.zemoga.danieldaza.zemogatest.MainView.Listeners.DeleteSwipeListener
+import com.zemoga.danieldaza.zemogatest.MainView.MainActivity
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Post
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Posts
-import com.zemoga.danieldaza.zemogatest.MainView.ViewModels.PostsViewModel
+import com.zemoga.danieldaza.zemogatest.MainView.R
 
 /**
  * A fragment representing a list of Items.
@@ -41,7 +36,7 @@ class PostFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_post_list, container, false)
-        val bundle: Bundle? = this.arguments
+        val bundle = this.arguments
         val type = bundle?.getString("type")
         val items = (activity as MainActivity).getFragmentData(type as String)
 
@@ -83,11 +78,8 @@ class PostFragment : Fragment() {
     }
 
     fun removeAll() {
-        ((view as RecyclerView).adapter as MyPostRecyclerViewAdapter).removeAll()
-    }
-
-    fun notifyDataSetChanged() {
-        ((view as RecyclerView).adapter as MyPostRecyclerViewAdapter).notifyDataSetChanged()
+        val adapter = (view as RecyclerView).adapter as MyPostRecyclerViewAdapter
+        adapter.removeAll()
     }
 
     /**
