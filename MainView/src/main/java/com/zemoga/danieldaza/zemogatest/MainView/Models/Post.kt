@@ -1,19 +1,11 @@
 package com.zemoga.danieldaza.zemogatest.MainView.Models
 
 import org.json.JSONObject
+import java.io.Serializable
 
-class Post {
-    private var userId : Int ?= null
-    private var id : Int ?= null
-    private var title : String ?= ""
-    private var body : String ?= ""
-
-    constructor(userId: Int, id: Int, title: String, body: String) {
-        this.userId = userId
-        this.id = id
-        this.title = title
-        this.body = body
-    }
+data class Post (val userId: Int, val id: Int, val title: String, val body: String) : Serializable {
+    private var favorite: Boolean = false
+    private var read: Boolean = true
 
     companion object {
         fun fromJsonObject(json : JSONObject) : Post {
@@ -26,35 +18,28 @@ class Post {
         }
     }
 
-    fun getUserId() : Int? {
-        return this.userId
+    fun setFavorite(favorite: Boolean) {
+        this.favorite = favorite
     }
 
-    fun getId() : Int? {
-        return this.id
+    fun toggleFavorite() {
+        this.favorite = !this.favorite
     }
 
-    fun getTitle() : String? {
-        return this.title
+    fun isRead(): Boolean {
+        return this.read
     }
 
-    fun getBody() : String? {
-        return this.body
+    fun setUnread() {
+        this.read = false
     }
 
-    fun setUserId(userId : Int) {
-        this.userId = userId
+    fun setRead() {
+        this.read = true
     }
 
-    fun setId(id : Int) {
-        this.id = id
+    fun isFavorite(): Boolean {
+        return this.favorite
     }
 
-    fun setTitle(title: String) {
-        this.title = title
-    }
-
-    fun setBody(body: String) {
-        this.body = body
-    }
 }

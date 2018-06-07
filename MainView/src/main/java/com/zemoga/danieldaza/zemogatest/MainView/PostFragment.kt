@@ -1,15 +1,22 @@
 package com.zemoga.danieldaza.zemogatest.MainView
 
+import android.annotation.SuppressLint
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
+import android.graphics.Canvas
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
+import android.support.v7.widget.helper.ItemTouchHelper.ACTION_STATE_SWIPE
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SimpleAdapter
+import com.zemoga.danieldaza.zemogatest.MainView.Listeners.DeleteSwipeListener
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Post
 import com.zemoga.danieldaza.zemogatest.MainView.Models.Posts
 import com.zemoga.danieldaza.zemogatest.MainView.ViewModels.PostsViewModel
@@ -20,17 +27,14 @@ import com.zemoga.danieldaza.zemogatest.MainView.ViewModels.PostsViewModel
  * [PostFragment.OnListFragmentInteractionListener] interface.
  */
 class PostFragment : Fragment() {
-
-    // TODO: Customize parameters
-    private var columnCount = 1
-
+    private var type = ""
     private var listener: OnListFragmentInteractionListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            columnCount = it.getInt(ARG_COLUMN_COUNT)
+            type = it.getString(ARG_TYPE)
         }
     }
 
@@ -44,12 +48,22 @@ class PostFragment : Fragment() {
         // Set the adapter
         if (view is RecyclerView) {
             with(view) {
-                layoutManager = when {
-                    columnCount <= 1 -> LinearLayoutManager(context)
-                    else -> GridLayoutManager(context, columnCount)
-                }
+                layoutManager = LinearLayoutManager(context)
                 adapter = MyPostRecyclerViewAdapter(items as Posts, listener)
             }
+
+            val deleteSwipeHandler = object : DeleteSwipeListener(this.context as Context) {
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder?, direction: Int) {
+                    val position = viewHolder!!.adapterPosition
+                    val adapter = view.adapter as MyPostRecyclerViewAdapter
+
+                    listener?.onRemoveItemFromListListener(position, type)
+                    adapter.removeAt(position)
+                }
+            }
+
+            val itemTouchHelper = ItemTouchHelper(deleteSwipeHandler)
+            itemTouchHelper.attachToRecyclerView(view)
         }
         return view
     }
@@ -68,6 +82,14 @@ class PostFragment : Fragment() {
         listener = null
     }
 
+    fun removeAll() {
+        ((view as RecyclerView).adapter as MyPostRecyclerViewAdapter).removeAll()
+    }
+
+    fun notifyDataSetChanged() {
+        ((view as RecyclerView).adapter as MyPostRecyclerViewAdapter).notifyDataSetChanged()
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -80,21 +102,18 @@ class PostFragment : Fragment() {
      * for more information.
      */
     interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        fun onListFragmentInteraction(item: Post?)
+        fun onListFragmentInteraction(item: Post?): Boolean
+        fun onRemoveItemFromListListener(position: Int, type: String)
     }
 
     companion object {
+        const val ARG_TYPE = "type"
 
-        // TODO: Customize parameter argument names
-        const val ARG_COLUMN_COUNT = "column-count"
-
-        // TODO: Customize parameter initialization
         @JvmStatic
-        fun newInstance(columnCount: Int) =
+        fun newInstance(type: String) =
                 PostFragment().apply {
                     arguments = Bundle().apply {
-                        putInt(ARG_COLUMN_COUNT, columnCount)
+                        putString(ARG_TYPE, type)
                     }
                 }
     }
